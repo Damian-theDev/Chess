@@ -18,7 +18,7 @@ class Queen(Piece):
         elif color == "black":
             return "d8"
         else: # managing input errors (for debugging)
-            print("--- ERROR: invalid color was used (use white and black as keyword) ---")
+            print("--- ERROR(Queen.__getStartingPosition): invalid color was used (use white and black as keyword) ---")
 
     # def getCurrentPosition(self):
     #     return self.__currentPosition

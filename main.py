@@ -7,7 +7,14 @@ b = Board()
 wq = Queen("white")
 bq = Queen("black")
 
-b.addPiece(wq, "73")
-b.addPiece(bq, "03")
+b.addPiece(wq, "04")
+b.addPiece(bq, "74")
+
+# --------------------
+
+wp0 = Pawn("white", 0)
+
+b.addPiece(wp0, "10")
+
 
 b.printBoard()
