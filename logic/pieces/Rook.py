@@ -1,25 +1,25 @@
 from .Piece import Piece
 
-class Pawn(Piece):
+class Rook(Piece):
     def __init__(self, color, number):
         startingPosition = self.__getStartingPosition(color, number)
         self.__number = number
 
         # defining the initial parameters of the piece though its parent class
-        super().__init__(color, startingPosition, 1)
+        super().__init__(color, startingPosition, 5)
         
     def __str__(self):
-        return f"{self._color} pawn n° {self.__number} on position {self._currentPosition}"
+        return f"{self._color} rook n° s{self.__number} on position {self._currentPosition}"
 
     # change the initial position based out of the color of the piece
     def __getStartingPosition(self, color, number):
-        xPositions = (0,1,2,3,4,5,6,7)
+        xPositions = (0, 7)
         xPos = xPositions[number]
         
         if color == "white": 
-            yPos = 6
+            yPos = 7
         elif color == "black": 
-            yPos = 1
+            yPos = 0
         else:
-            raise ValueError(f"--- ERROR(Pawn.__getStartingPosition): invalid color was used ({color}) ---")
+            raise ValueError(f"--- ERROR(Rook.__getStartingPosition): invalid color was used ({color}) ---")
         return (xPos, yPos)

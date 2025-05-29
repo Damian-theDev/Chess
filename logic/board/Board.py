@@ -5,12 +5,12 @@ class Board():
     # TODO - evaluate if this method is actually required
     # puts a piece in a specified position on the board
     def addPiece(self, piece, position):
-        if isinstance(position, str):
+        if isinstance(position, tuple):
             self.__board[int(position[0])][int(position[1])] = piece
-
+        else:
+            print('--- ERROR(Board.addPiece): position was not specified the right way ---')
     # printing the board    
     def printBoard(self):
-        letters = ('a','b','c','d','e','f','g','h')
         for pos, i in enumerate(self.__board):
             print(pos ,i)
 
@@ -28,5 +28,7 @@ class Board():
             ['a1', None, None, None, None, None, None, 'h1']
         ]
     
-    def getBoard(self):
+    def getBoard(self, position=None):
+        if position:
+            return self.__board[position[0]][position[1]]
         return self.__board
