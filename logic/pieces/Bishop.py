@@ -1,18 +1,26 @@
 from .Piece import Piece
-class Queen(Piece):
-    def __init__(self, color):
-        startingPosition = self.__getStartingPosition(color)
-        super().__init__(color, 'queen', startingPosition, value=9)
+class Bishop(Piece):
+    def __init__(self, color, number):
+        startingPosition = self.__getStartingPosition(color, number)
+
+        # defining the initial parameters of the piece though its parent class
+        super().__init__(color, 'bishop', startingPosition, value=3)
 
     def __str__(self):
-        return f"{self._color} queen at position {self._currentPosition}"
+        return f"{self._color} bishop at position {self._currentPosition}"
 
-    def __getStartingPosition(self, color):
-        if color == "white":
-            return (3, 7)  
-        elif color == "black":
-            return (3, 0)   
-        raise ValueError(f'--- ERROR(Queen.__getStartingPosition): invalid color was used ({color}) ---')
+    # change the initial position based out of the color of the piece
+    def __getStartingPosition(self, color, number):
+        xPositions = (2, 5)
+        xPos = xPositions[number]
+        
+        if color == "white": 
+            yPos = 7
+        elif color == "black": 
+            yPos = 0
+        else:
+            raise ValueError(f"--- ERROR(Bishop.__getStartingPosition): invalid color was used ({color}) ---")
+        return (xPos, yPos)
     
     def validateMove(self, newRow, newCol, boardState):
         oldCol, oldRow = self._currentPosition
@@ -20,10 +28,9 @@ class Queen(Piece):
         deltaRow = newRow - oldRow
         
         # --- Check if move is straight or diagonal ---
-        isStraight = (deltaCol == 0 or deltaRow == 0)
         isDiagonal = (abs(deltaCol) == abs(deltaRow))
         
-        if not (isStraight or isDiagonal):
+        if not isDiagonal:
             print(f'movement not permitted ({self})')
             return False
             
@@ -35,7 +42,7 @@ class Queen(Piece):
         currentCol, currentRow = oldCol + stepCol, oldRow + stepRow
         while currentCol != newCol or currentRow != newRow:
             if boardState[currentRow][currentCol] is not None:
-                print(f'pieces breaking the flow in r{currentRow} c{currentCol} ({self})')
+                print(f'pieces breaking the flow ({self} on {currentCol}, {currentRow})')
                 return False  # Piece blocking the path
             currentCol += stepCol
             currentRow += stepRow
@@ -48,5 +55,5 @@ class Queen(Piece):
             
         # --- If all checks passed, update position ---
         self._currentPosition = (newCol, newRow)
-        print(f'move approved ({self})')        
+        print(f'move approved ({self})')
         return True

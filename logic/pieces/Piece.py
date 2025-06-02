@@ -1,18 +1,18 @@
 class Piece:
-    def __init__(self, color, currentPosition, value, imgName):
+    def __init__(self, color, type, currentPosition, value):
         # * Base class for all chess pieces
         # Args:
         #     color (str): either 'white' or 'black'
+        #     type (str): type of the piece (ex. 'pawn' or 'bihsop' exc.)
         #     currentPosition (tuple): (x, y) coordinates on the board
         #     value (int): piece's relative value
         #     statusAlive (bool): flag to check if the piece has been taken
-        #     imgName (str): name of the image of the piece, needed for drawing the corresponding image
         
         self._color = color
+        self._type = type
         self._currentPosition = currentPosition
         self._value = value
         self._alive = True
-        self._imgName = imgName
 
     def __str__(self):
         return f"Generic {self._color} piece at position {self._currentPosition}"
@@ -21,6 +21,10 @@ class Piece:
     @property
     def color(self):
         return self._color
+    
+    @property
+    def type(self):
+        return self._type
 
     @property
     def currentPosition(self):
@@ -37,10 +41,6 @@ class Piece:
     @property
     def alive(self):
         return self._alive
-
-    @property
-    def imgName(self):
-        return self._imgName
 
     # mark the piece as captured
     def capture(self):

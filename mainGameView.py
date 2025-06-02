@@ -35,112 +35,63 @@ pieceImages = {
     }
 }
 
-# --- Load all chess piece images ---
-def loadPieceImages():
-    # --- Load white pieces ---
-    pieceImages['white']['pawn'] = pygame.transform.scale(
-        pygame.image.load(os.path.join(dirImages, 'white-pawn.png')).convert_alpha(gameWindow),
-        DEFAULT_PIECE_SIZE
-    )
-    pieceImages['white']['rook'] = pygame.transform.scale(
-        pygame.image.load(os.path.join(dirImages, 'white-rook.png')).convert_alpha(gameWindow),
-        DEFAULT_PIECE_SIZE
-    )
-    pieceImages['white']['knight'] = pygame.transform.scale(
-        pygame.image.load(os.path.join(dirImages, 'white-knight.png')).convert_alpha(gameWindow),
-        DEFAULT_PIECE_SIZE
-    )
-    pieceImages['white']['bishop'] = pygame.transform.scale(
-        pygame.image.load(os.path.join(dirImages, 'white-bishop.png')).convert_alpha(gameWindow),
-        DEFAULT_PIECE_SIZE
-    )
-    pieceImages['white']['queen'] = pygame.transform.scale(
-        pygame.image.load(os.path.join(dirImages, 'white-queen.png')).convert_alpha(gameWindow),
-        DEFAULT_PIECE_SIZE
-    )
-    pieceImages['white']['king'] = pygame.transform.scale(
-        pygame.image.load(os.path.join(dirImages, 'white-king.png')).convert_alpha(gameWindow),
-        DEFAULT_PIECE_SIZE
-    )
-    
-    # --- Load black pieces ---
-    pieceImages['black']['pawn'] = pygame.transform.scale(
-        pygame.image.load(os.path.join(dirImages, 'black-pawn.png')).convert_alpha(gameWindow),
-        DEFAULT_PIECE_SIZE
-    )
-    pieceImages['black']['rook'] = pygame.transform.scale(
-        pygame.image.load(os.path.join(dirImages, 'black-rook.png')).convert_alpha(gameWindow),
-        DEFAULT_PIECE_SIZE
-    )
-    pieceImages['black']['knight'] = pygame.transform.scale(
-        pygame.image.load(os.path.join(dirImages, 'black-knight.png')).convert_alpha(gameWindow),
-        DEFAULT_PIECE_SIZE
-    )
-    pieceImages['black']['bishop'] = pygame.transform.scale(
-        pygame.image.load(os.path.join(dirImages, 'black-bishop.png')).convert_alpha(gameWindow),
-        DEFAULT_PIECE_SIZE
-    )
-    pieceImages['black']['queen'] = pygame.transform.scale(
-        pygame.image.load(os.path.join(dirImages, 'black-queen.png')).convert_alpha(gameWindow),
-        DEFAULT_PIECE_SIZE
-    )
-    pieceImages['black']['king'] = pygame.transform.scale(
-        pygame.image.load(os.path.join(dirImages, 'black-king.png')).convert_alpha(gameWindow),
-        DEFAULT_PIECE_SIZE
-    )
+# --- load all chess piece images with a loop ---
+for color in ('white', 'black'):
+    for piece in ('pawn', 'rook', 'knight', 'bishop', 'queen', 'king'):
+        filename = f"{color}-{piece}.png"
+        path = os.path.join(dirImages, filename)
+        img = pygame.image.load(path).convert_alpha(gameWindow)
+        pieceImages[color][piece] = pygame.transform.scale(img, DEFAULT_PIECE_SIZE)
 
-# --- Call the function to load images ---
-loadPieceImages()
+# --- game state variables ---
+selectedPiece = None    # currently selected piece (row, col)
+isDragging = False      # flag: is the player dragging something
+dragOffset = (0, 0)     # offset between mouse and piece top-left corner
 
-# --- Game state variables ---
-selectedPiece = None  # Currently selected piece (row, col)
-isDragging = False  # Flag for when piece is being dragged
-dragOffset = (0, 0)  # Offset between mouse and piece top-left corner
-
-#TODO link the board directly
-# --- Initial board setup ---
+# --- initial board setup with linked objs ---
 boardState = [
-    ['black_rook', 'black_knight', 'black_bishop', 'black_queen', 'black_king', 'black_bishop', 'black_knight', 'black_rook'],
-    ['black_pawn'] * 8,
+    [pieces['black']['rookArray'][0], pieces['black']['knightArray'][0], pieces['black']['bishopArray'][0], pieces['black']['queen'], pieces['black']['king'], pieces['black']['bishopArray'][1], pieces['black']['knightArray'][1], pieces['black']['rookArray'][1]],
+    pieces['black']['pawnArray'],
     [None] * 8,
     [None] * 8,
     [None] * 8,
     [None] * 8,
-    ['white_pawn'] * 8,
-    ['white_rook', 'white_knight', 'white_bishop', 'white_queen', 'white_king', 'white_bishop', 'white_knight', 'white_rook']
+    pieces['white']['pawnArray'],
+    [pieces['white']['rookArray'][0], pieces['white']['knightArray'][0], pieces['white']['bishopArray'][0], pieces['white']['queen'], pieces['white']['king'], pieces['white']['bishopArray'][1], pieces['white']['knightArray'][1], pieces['white']['rookArray'][1]]
 ]
 
-# --- Draw the chess board ---
+# --- draw the chess board underneath ---
 def drawBoard():
-    # --- Draw alternating squares ---
+    # --- alternating squares ---
     for row in range(8):
         for col in range(8):
-            # Light squares for even sum, dark for odd
+            # using light squares for even sum, dark for odd
             squareColor = (210, 180, 140) if (row + col) % 2 == 0 else (100, 60, 30)
             pygame.draw.rect(gameWindow, squareColor, (col * 100, row * 100, 100, 100))
     
-    # --- Draw grid lines ---
+    # --- grid lines ---
     for i in range(7):
         pygame.draw.line(gameWindow, (255, 255, 255), (0, 100 + 100*i), (800, 100 + 100*i), 3)
         pygame.draw.line(gameWindow, (255, 255, 255), (100 + 100*i, 0), (100 + 100*i, 800), 3)
 
-# --- Draw all chess pieces ---
+# --- draw all chess pieces ---
 def drawPieces():
-    # --- Draw all pieces except the one being dragged ---
+    # --- draw all pieces, except the one being dragged ---
     for row in range(8):
         for col in range(8):
             piece = boardState[row][col]
             if piece and (not isDragging or (row, col) != selectedPiece):
-                color, pieceType = piece.split('_')
+                color, pieceType = piece.color, piece.type
                 img = pieceImages[color][pieceType]
                 gameWindow.blit(img, (col * 100 + DEFAULT_PIECE_OFFSET, row * 100 + DEFAULT_PIECE_OFFSET))
     
-    # --- Draw the dragged piece on top ---
+def drawDraggedPiece():
+    # --- draw the dragged piece on top ---
     if isDragging and selectedPiece:
         row, col = selectedPiece
         piece = boardState[row][col]
         if piece:
-            color, pieceType = piece.split('_')
+            color, pieceType = piece.color, piece.type
             img = pieceImages[color][pieceType]
             mouseX, mouseY = pygame.mouse.get_pos()
             gameWindow.blit(img, (mouseX - dragOffset[0], mouseY - dragOffset[1]))
@@ -152,49 +103,53 @@ while isRunning:
     gameWindow.fill((150, 80, 50))  # Brown background
     drawBoard()
     drawPieces()
+    drawDraggedPiece()
     pygame.display.flip()  # Update the display
 
-    # --- Handle events ---
+    # --- events handler ---
     for event in pygame.event.get():
-        # --- Exit the game ---
+        # --- exit the game ---
         if event.type == pygame.QUIT:
             isRunning = False
         
-        # --- Mouse button down (select piece) ---
+        # --- mouse button down (select piece) ---
         elif event.type == pygame.MOUSEBUTTONDOWN:
-            if event.button == 1:  # Left mouse button
+            if event.button == 1:                   # Left mouse button
                 mouseX, mouseY = event.pos
                 col, row = mouseX // 100, mouseY // 100
                 
-                # --- Check if clicked on a piece ---
+                # --- check if a piece was clicked ---
                 if 0 <= row < 8 and 0 <= col < 8 and boardState[row][col]:
                     selectedPiece = (row, col)
                     isDragging = True
-                    # --- Calculate offset from piece corner ---
+                    # --- calculate the offset from piece to corner of the selected square ---
                     dragOffset = (mouseX - col * 100, mouseY - row * 100)
         
-        # --- Mouse button up (drop piece) ---
+        # --- mouse button up (drop piece) ---
         elif event.type == pygame.MOUSEBUTTONUP:
-            if event.button == 1 and isDragging:  # Left mouse button
+            if event.button == 1 and isDragging:    # left mouse button
                 mouseX, mouseY = event.pos
                 newCol, newRow = mouseX // 100, mouseY // 100
                 
-                # --- Validate move (TODO: replace with actual chess logic) ---
+                # --- validate moves ---
                 if (0 <= newRow < 8 and 0 <= newCol < 8 and 
                     (newRow, newCol) != selectedPiece):
                     
-                    # --- Move the piece ---
                     piece = boardState[selectedPiece[0]][selectedPiece[1]]
-                    boardState[selectedPiece[0]][selectedPiece[1]] = None
-                    boardState[newRow][newCol] = piece
-                
-                # --- Reset dragging state ---
+                    if piece.validateMove(newRow, newCol, boardState):
+                        # --- move the piece ---
+                        boardState[selectedPiece[0]][selectedPiece[1]] = None
+                        boardState[newRow][newCol] = piece
+                        
+                        #TODO : add turn logic
+                    
+                # --- reset dragging flags ---
                 isDragging = False
                 selectedPiece = None
         
-        # --- Mouse motion (dragging piece) ---
+        # --- mouse motion (dragging piece) ---
         elif event.type == pygame.MOUSEMOTION and isDragging:
-            pass  # Handled in drawPieces()
+            pass  # already handled in drawDraggedPiece()
 
-# --- Clean up ---
+# --- end the program ---
 pygame.quit()
