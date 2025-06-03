@@ -4,7 +4,6 @@ class Rook(Piece):
     def __init__(self, color, number):
         startingPosition = self.__getStartingPosition(color, number)
         self.__number = number
-        self.firstMove = True
 
         # defining the initial parameters of the piece though its parent class
         super().__init__(color, 'rook', startingPosition, value=5)
@@ -41,7 +40,7 @@ class Rook(Piece):
         stepCol = 0 if deltaCol == 0 else (1 if deltaCol > 0 else -1)
         stepRow = 0 if deltaRow == 0 else (1 if deltaRow > 0 else -1)
         
-        # --- Check each square along the path ---
+        # --- check each square along the path ---
         currentCol, currentRow = oldCol + stepCol, oldRow + stepRow
         while currentCol != newCol or currentRow != newRow:
             if boardState[currentRow][currentCol] is not None:
@@ -50,14 +49,12 @@ class Rook(Piece):
             currentCol += stepCol
             currentRow += stepRow
             
-        # --- Check destination square ---
+        # --- check destination square ---
         targetPiece = boardState[newRow][newCol]
         if targetPiece is not None and targetPiece.color == self._color:
             print(f'friendly fire not permitted ({self})')
-            return False  # Can't capture own piece
+            return False  
             
-        # --- If all checks passed, update position ---
-        self._currentPosition = (newCol, newRow)
-        self.firstMove = False
+        # --- if all checks passed ---
         print(f'move approved ({self})') 
         return True

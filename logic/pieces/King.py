@@ -3,7 +3,6 @@ class King(Piece):
     def __init__(self, color):
         startingPosition = self.__getStartingPosition(color)
         super().__init__(color, 'king', startingPosition, value=0)  # Highest value piece
-        self.firstMove = True
 
     def __str__(self):
         return f"{self._color} king at position {self._currentPosition}"
@@ -31,9 +30,8 @@ class King(Piece):
             print(f'friendly fire is not permitted ({self})')
             return False
         
-        if not self.__squareUnderAttack(newRow, newCol, boardState):
-            self.firstMove = False
-            self._currentPosition = (newCol, newRow)
+        if self.__squareIsSafe(newCol, newRow, boardState):
+            print(f'move approved ({self})')  
             return True
             
 
@@ -62,24 +60,28 @@ class King(Piece):
     #         if self.__isSquareUnderAttack(oldRow, col, boardState, self._color):
     #             return False
                 
-    #     # move rook (actual movement handled in game logic)
-    #     self.firstMove = False
-    #     self._currentPosition = (oldCol + direction*2, oldRow)
     #     return True
 
-    def __squareUnderAttack(self, newKingRow, newKingCol, boardState):
+    def __squareIsSafe(self, newKingCol, newKingRow, boardState):
         # check if any opponent piece attacks this square
         for checkedRow in range(8):
             for checkedCol in range(8):
-                piece = boardState[checkedRow][checkedCol]
+                piece = boardState[checkedCol][checkedRow]
                 
-                if piece == None or (checkedCol, checkedRow) == self._currentPosition or piece.color == self._color:
+                # empty cell, no threats
+                if piece == None:
+                    continue 
+                    
+                # same color, no threats
+                if piece.color == self._color:
                     continue
                 
-                # TODO setup the condition 
-                # if piece.type == 'pawn':
-                #     piece.attack(newKingRow, newKingCol, boardState)
-                # else: 
-                #     piece.validateMove(newKingRow, newKingCol, boardState)
+                # check if the enemy piece is a threat
+                if piece.type == 'pawn' and piece.canAttack(newKingRow, newKingCol, boardState):
+                    return False
+                elif piece.validateMove(newKingRow, newKingCol, boardState):
+                    return False
+            
 
-        return False
+
+        return True

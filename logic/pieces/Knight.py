@@ -38,7 +38,7 @@ class Knight(Piece):
         if targetPiece is not None and targetPiece.color == self._color:
             print(f'friendly fire is not permitted ({self})')
             return False  # Can't capture own piece
-            
-        self._currentPosition = (newCol, newRow)
+        
+        # --- If all checks passed ---
         print(f'move approved ({self})')        
         return True

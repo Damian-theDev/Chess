@@ -13,6 +13,7 @@ class Piece:
         self._currentPosition = currentPosition
         self._value = value
         self._alive = True
+        self._firstMove = True
 
     def __str__(self):
         return f"Generic {self._color} piece at position {self._currentPosition}"
@@ -21,6 +22,10 @@ class Piece:
     @property
     def color(self):
         return self._color
+
+    @property
+    def firstMove(self):
+        return self._firstMove
     
     @property
     def type(self):

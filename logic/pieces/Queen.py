@@ -35,7 +35,7 @@ class Queen(Piece):
         currentCol, currentRow = oldCol + stepCol, oldRow + stepRow
         while currentCol != newCol or currentRow != newRow:
             if boardState[currentRow][currentCol] is not None:
-                print(f'pieces breaking the flow in r{currentRow} c{currentCol} ({self})')
+                print(f'pieces breaking the flow ({self})')
                 return False  # Piece blocking the path
             currentCol += stepCol
             currentRow += stepRow
@@ -46,7 +46,6 @@ class Queen(Piece):
             print(f'friendly fire not permitted ({self})')
             return False  # Can't capture own piece
             
-        # --- If all checks passed, update position ---
-        self._currentPosition = (newCol, newRow)
+        # --- If all checks passed ---
         print(f'move approved ({self})')        
         return True

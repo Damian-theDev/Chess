@@ -1,19 +1,24 @@
 import pygame
 import os
-from logic import pieces, b
+from logic import board
 
 # --- Initialize pygame ---
 pygame.init()
 
 # --- Screen setup ---
-SCREEN_WIDTH, SCREEN_HEIGHT = 800, 800
+SCREEN_WIDTH, SCREEN_HEIGHT = 800, 830
 gameWindow = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
 gameWindow.fill((150, 80, 50))  # Fill with brown background
 
 # --- Variables for the images ---
-DEFAULT_PIECE_SIZE = (80, 80)  # Size of each chess piece
-DEFAULT_PIECE_OFFSET = 10  # Offset from the square edges
+IMG_OFFSET = 10
 dirImages = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'images')
+
+# --- Piece positioning constants ---
+SQUARE_SIZE = 100
+PIECE_SIZE = 80
+PIECE_OFFSET = (SQUARE_SIZE - PIECE_SIZE) // 2  # Centers piece in square (10px)
+INDICATOR_HEIGHT = 30
 
 # --- Dictionary to store all piece images ---
 pieceImages = {
@@ -41,24 +46,12 @@ for color in ('white', 'black'):
         filename = f"{color}-{piece}.png"
         path = os.path.join(dirImages, filename)
         img = pygame.image.load(path).convert_alpha(gameWindow)
-        pieceImages[color][piece] = pygame.transform.scale(img, DEFAULT_PIECE_SIZE)
+        pieceImages[color][piece] = pygame.transform.scale(img, (PIECE_SIZE, PIECE_SIZE))
 
 # --- game state variables ---
 selectedPiece = None    # currently selected piece (row, col)
 isDragging = False      # flag: is the player dragging something
 dragOffset = (0, 0)     # offset between mouse and piece top-left corner
-
-# --- initial board setup with linked objs ---
-boardState = [
-    [pieces['black']['rookArray'][0], pieces['black']['knightArray'][0], pieces['black']['bishopArray'][0], pieces['black']['queen'], pieces['black']['king'], pieces['black']['bishopArray'][1], pieces['black']['knightArray'][1], pieces['black']['rookArray'][1]],
-    pieces['black']['pawnArray'],
-    [None] * 8,
-    [None] * 8,
-    [None] * 8,
-    [None] * 8,
-    pieces['white']['pawnArray'],
-    [pieces['white']['rookArray'][0], pieces['white']['knightArray'][0], pieces['white']['bishopArray'][0], pieces['white']['queen'], pieces['white']['king'], pieces['white']['bishopArray'][1], pieces['white']['knightArray'][1], pieces['white']['rookArray'][1]]
-]
 
 # --- draw the chess board underneath ---
 def drawBoard():
@@ -67,43 +60,77 @@ def drawBoard():
         for col in range(8):
             # using light squares for even sum, dark for odd
             squareColor = (210, 180, 140) if (row + col) % 2 == 0 else (100, 60, 30)
-            pygame.draw.rect(gameWindow, squareColor, (col * 100, row * 100, 100, 100))
+            pygame.draw.rect(gameWindow, squareColor, 
+                           (col * SQUARE_SIZE, 
+                            row * SQUARE_SIZE + INDICATOR_HEIGHT,
+                            SQUARE_SIZE, SQUARE_SIZE))
     
     # --- grid lines ---
-    for i in range(7):
-        pygame.draw.line(gameWindow, (255, 255, 255), (0, 100 + 100*i), (800, 100 + 100*i), 3)
-        pygame.draw.line(gameWindow, (255, 255, 255), (100 + 100*i, 0), (100 + 100*i, 800), 3)
+    for i in range(9):
+        # Horizontal lines
+        pygame.draw.line(gameWindow, (255, 255, 255),
+                        (0, i * SQUARE_SIZE + INDICATOR_HEIGHT),
+                        (SCREEN_WIDTH, i * SQUARE_SIZE + INDICATOR_HEIGHT), 3)
+        # Vertical lines
+        pygame.draw.line(gameWindow, (255, 255, 255),
+                        (i * SQUARE_SIZE, INDICATOR_HEIGHT),
+                        (i * SQUARE_SIZE, SCREEN_HEIGHT), 3)
 
 # --- draw all chess pieces ---
 def drawPieces():
     # --- draw all pieces, except the one being dragged ---
     for row in range(8):
         for col in range(8):
-            piece = boardState[row][col]
+            piece = board.getBoard()[row][col]
             if piece and (not isDragging or (row, col) != selectedPiece):
-                color, pieceType = piece.color, piece.type
-                img = pieceImages[color][pieceType]
-                gameWindow.blit(img, (col * 100 + DEFAULT_PIECE_OFFSET, row * 100 + DEFAULT_PIECE_OFFSET))
+                img = pieceImages[piece.color][piece.type]
+                gameWindow.blit(img, 
+                              (col * SQUARE_SIZE + PIECE_OFFSET,
+                               row * SQUARE_SIZE + PIECE_OFFSET + INDICATOR_HEIGHT))
     
 def drawDraggedPiece():
     # --- draw the dragged piece on top ---
     if isDragging and selectedPiece:
-        row, col = selectedPiece
-        piece = boardState[row][col]
+        piece = board.getBoard()[selectedPiece[0]][selectedPiece[1]]
         if piece:
-            color, pieceType = piece.color, piece.type
-            img = pieceImages[color][pieceType]
+            img = pieceImages[piece.color][piece.type]
             mouseX, mouseY = pygame.mouse.get_pos()
-            gameWindow.blit(img, (mouseX - dragOffset[0], mouseY - dragOffset[1]))
+            # center the img on mouse cursor
+            gameWindow.blit(img, (mouseX - PIECE_SIZE/2, mouseY - INDICATOR_HEIGHT))
+            
+def drawTurnIndicator(gameOver, currentTurn, winner):
+    # text setup
+    font = pygame.font.SysFont('Arial', 24)
+    text = f"Game Over! {winner} wins!" if gameOver else f"{currentTurn}'s turn"
+    textSurface = font.render(text, True, (255, 255, 255))
+    
+    # indicator background
+    pygame.draw.rect(gameWindow, (50, 50, 50), 
+                   (0, 0, SCREEN_WIDTH, INDICATOR_HEIGHT))
+    
+    # centered text
+    text_rect = textSurface.get_rect(center=(SCREEN_WIDTH//2, INDICATOR_HEIGHT//2))
+    gameWindow.blit(textSurface, text_rect)
+
+def getBoardPositionFromMouse(pos):
+    x, y = pos
+    col = x // SQUARE_SIZE
+    row = (y - INDICATOR_HEIGHT) // SQUARE_SIZE
+    return (row, col) if 0 <= row < 8 and 0 <= col < 8 else (None, None)
 
 # --- Main game loop ---
 isRunning = True
+gameOver = False
+currentTurn = 'white'
+winner = None
+
 while isRunning:
-    # --- Clear and redraw everything ---
-    gameWindow.fill((150, 80, 50))  # Brown background
+    # --- clear and redraw everything ---
+    gameWindow.fill((150, 80, 50))
     drawBoard()
     drawPieces()
     drawDraggedPiece()
+    drawTurnIndicator(gameOver, currentTurn, winner)
     pygame.display.flip()  # Update the display
 
     # --- events handler ---
@@ -114,38 +141,53 @@ while isRunning:
         
         # --- mouse button down (select piece) ---
         elif event.type == pygame.MOUSEBUTTONDOWN:
-            if event.button == 1:                   # Left mouse button
-                mouseX, mouseY = event.pos
-                col, row = mouseX // 100, mouseY // 100
-                
-                # --- check if a piece was clicked ---
-                if 0 <= row < 8 and 0 <= col < 8 and boardState[row][col]:
+            if event.button == 1 and not gameOver:
+                row, col = getBoardPositionFromMouse(event.pos)
+                # --- check if the player clicked one of thier pieces ---
+                if row is not None and board.getBoard()[row][col] and board.getBoard()[row][col].color == currentTurn:
                     selectedPiece = (row, col)
                     isDragging = True
-                    # --- calculate the offset from piece to corner of the selected square ---
-                    dragOffset = (mouseX - col * 100, mouseY - row * 100)
+                    # --- calculate offset from piece center ---
+                    mouseX, mouseY = event.pos
+                    dragOffset = (mouseX - (col * SQUARE_SIZE + PIECE_OFFSET),
+                                mouseY - (row * SQUARE_SIZE + PIECE_OFFSET + INDICATOR_HEIGHT))
         
         # --- mouse button up (drop piece) ---
         elif event.type == pygame.MOUSEBUTTONUP:
-            if event.button == 1 and isDragging:    # left mouse button
+            if event.button == 1 and isDragging and not gameOver:
                 mouseX, mouseY = event.pos
-                newCol, newRow = mouseX // 100, mouseY // 100
-                
-                # --- validate moves ---
+                newCol, newRow = (mouseX) // 100, (mouseY - INDICATOR_HEIGHT) // 100
+            
+                # Validate moves and turn
                 if (0 <= newRow < 8 and 0 <= newCol < 8 and 
                     (newRow, newCol) != selectedPiece):
                     
+                    boardState = board.getBoard()
                     piece = boardState[selectedPiece[0]][selectedPiece[1]]
-                    if piece.validateMove(newRow, newCol, boardState):
+                    
+                    # only allow to move your own pieces
+                    if (piece and piece.color == currentTurn and 
+                        piece.validateMove(newRow, newCol, boardState)):
+                        
+                        # --- check mate ---
+                        targetPiece = boardState[newRow][newCol]
+                        if targetPiece and targetPiece.type == 'king':
+                            gameOver = True
+                            winner = currentTurn
+                        
                         # --- move the piece ---
+                        piece._currentPosition = (newCol, newRow)
+                        if piece._firstMove:
+                            piece._firstMove = False
                         boardState[selectedPiece[0]][selectedPiece[1]] = None
                         boardState[newRow][newCol] = piece
                         
-                        #TODO : add turn logic
-                    
-                # --- reset dragging flags ---
-                isDragging = False
-                selectedPiece = None
+                        # --- change turn ---
+                        currentTurn = 'black' if currentTurn == 'white' else 'white'
+                            
+            # --- reset dragging flags ---
+            isDragging = False
+            selectedPiece = None
         
         # --- mouse motion (dragging piece) ---
         elif event.type == pygame.MOUSEMOTION and isDragging:
