@@ -1,8 +1,9 @@
 import pygame
 import os
 from logic import board
+from chessDB import ChessDatabase
 
-# --- Initialize pygame ---
+# --- initialize pygame ---
 pygame.init()
 
 # --- Screen setup ---
@@ -118,6 +119,11 @@ def getBoardPositionFromMouse(pos):
     row = (y - INDICATOR_HEIGHT) // SQUARE_SIZE
     return (row, col) if 0 <= row < 8 and 0 <= col < 8 else (None, None)
 
+# --- initialize DB ---
+db = ChessDatabase()
+current_game_id = db.start_new_game()
+ply_counter = 0
+
 # --- Main game loop ---
 isRunning = True
 gameOver = False
@@ -170,6 +176,10 @@ while isRunning:
                     if (piece and piece.color == currentTurn and 
                         piece.validateMove(newRow, newCol, boardState)):
                         
+                        # --- record the move on the DB ---
+                        db.record_move(game_id=current_game_id, ply=ply_counter, piece=piece, from_pos=selectedPiece, to_pos=(newRow, newCol), board_state=board.getBoard(), target_piece=targetPiece)
+                        ply_counter += 1
+
                         # --- Handle castling ---
                         if (piece.type == 'king' and 
                             abs(newCol - selectedPiece[1]) == 2):  # Castling move
@@ -209,7 +219,7 @@ while isRunning:
                         # --- change turn ---
                         currentTurn = 'black' if currentTurn == 'white' else 'white'
                 
-                        board.print_board_debug()
+                        # board.print_board_debug()
                             
             # --- reset dragging flags ---
             isDragging = False
@@ -220,4 +230,7 @@ while isRunning:
             pass  # already handled in drawDraggedPiece()
 
 # --- end the program ---
+result = '1-0' if winner == 'white' else '0-1' if winner == 'black' else '1/2-1/2'
+db.end_game(current_game_id, result)
+db.close()
 pygame.quit()

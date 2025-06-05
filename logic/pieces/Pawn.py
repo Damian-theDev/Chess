@@ -65,13 +65,13 @@ class Pawn(Piece):
                 boardState[newRow][newCol].color != self._color):
                 return True
                 
-            # en passant capture
-            adjacent_piece = boardState[oldRow][newCol]
-            if (adjacent_piece and 
-                adjacent_piece.type == 'pawn' and 
-                adjacent_piece.color != self._color and
-                getattr(adjacent_piece, '_Pawn__en_passant_vulnerable', False)):
-                return True
+            # TO IMPLEMENT : en passant capture
+            # adjacent_piece = boardState[oldRow][newCol]
+            # if (adjacent_piece and 
+            #     adjacent_piece.type == 'pawn' and 
+            #     adjacent_piece.color != self._color and
+            #     getattr(adjacent_piece, '_Pawn__en_passant_vulnerable', False)):
+            #     return True
             
         return False
 

@@ -1,5 +1,0 @@
-to be able to reconstruct the moves backwards, i wanna use the default algebraic notation 
-
-im going to make a lil edit to implement this easily
-original - Bxe5 -> bishop captured in e5
-custom -   Bx

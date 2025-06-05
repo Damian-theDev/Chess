@@ -62,6 +62,3 @@ for I in board.getBoard():
         else:
             s.append(None)    
     print(s)
-    
-    
-board.print_board_debug()
