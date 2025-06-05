@@ -28,11 +28,9 @@ class Bishop(Piece):
         deltaCol = newCol - oldCol
         deltaRow = newRow - oldRow
         
-        # --- Check if move is straight or diagonal ---
+        # --- check if move is diagonal ---
         isDiagonal = (abs(deltaCol) == abs(deltaRow))
-        
         if not isDiagonal:
-            print(f'movement not permitted ({self})')
             return False
             
         # --- Determine direction of movement ---
@@ -43,7 +41,6 @@ class Bishop(Piece):
         currentCol, currentRow = oldCol + stepCol, oldRow + stepRow
         while currentCol != newCol or currentRow != newRow:
             if boardState[currentRow][currentCol] is not None:
-                print(f'pieces breaking the flow ({self} on {currentCol}, {currentRow})')
                 return False  # Piece blocking the path
             currentCol += stepCol
             currentRow += stepRow
@@ -51,9 +48,7 @@ class Bishop(Piece):
         # --- Check destination square ---
         targetPiece = boardState[newRow][newCol]
         if targetPiece is not None and targetPiece.color == self._color:
-            print(f'friendly fire not permitted ({self})')
             return False  # Can't capture own piece
             
         # --- If all checks passed ---
-        print(f'move approved ({self})')
         return True

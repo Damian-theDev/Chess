@@ -24,7 +24,6 @@ class Queen(Piece):
         isDiagonal = (abs(deltaCol) == abs(deltaRow))
         
         if not (isStraight or isDiagonal):
-            print(f'movement not permitted ({self})')
             return False
             
         # --- Determine direction of movement ---
@@ -35,7 +34,6 @@ class Queen(Piece):
         currentCol, currentRow = oldCol + stepCol, oldRow + stepRow
         while currentCol != newCol or currentRow != newRow:
             if boardState[currentRow][currentCol] is not None:
-                print(f'pieces breaking the flow ({self})')
                 return False  # Piece blocking the path
             currentCol += stepCol
             currentRow += stepRow
@@ -43,9 +41,7 @@ class Queen(Piece):
         # --- Check destination square ---
         targetPiece = boardState[newRow][newCol]
         if targetPiece is not None and targetPiece.color == self._color:
-            print(f'friendly fire not permitted ({self})')
             return False  # Can't capture own piece
             
         # --- If all checks passed ---
-        print(f'move approved ({self})')        
         return True

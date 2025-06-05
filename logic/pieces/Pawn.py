@@ -4,6 +4,7 @@ class Pawn(Piece):
     def __init__(self, color, number):
         startingPosition = self.__getStartingPosition(color, number)
         self.__number = number
+        self.__en_passant_vulnerable = False
 
         # defining the initial parameters of the piece though its parent class
         super().__init__(color, 'pawn', startingPosition, value=1)
@@ -25,45 +26,54 @@ class Pawn(Piece):
         return (xPos, yPos)
     
     def validateMove(self, newRow, newCol, boardState):
+        self.__en_passant_vulnerable = False
         oldCol, oldRow = self._currentPosition
         direction = -1 if self._color == "white" else 1  # White moves up, black moves down
         
-        # --- Basic movement rules ---
-        # Forward one square
+        # --- movement rules ---
+        # default movement
         if (newCol == oldCol and 
             newRow == oldRow + direction and 
             boardState[newRow][newCol] is None):
-            print(f'move approved ({self})') 
             return True
             
-        # Forward two squares from starting position
+        # double step from starting position
         if (self._firstMove and 
             newCol == oldCol and 
             newRow == oldRow + 2*direction and 
             boardState[oldRow + direction][oldCol] is None and 
             boardState[newRow][newCol] is None):
-            print(f'move approved ({self})') 
+            self.__en_passant_vulnerable = True
             return True
         
+        # attacking
         if self.canAttack(newRow, newCol, boardState):
             return True
         
-        print(f'movement not permitted ({self})')
         return False
             
-    # --- Capture rules (diagonal) ---
+    # --- capture rules ---
     def canAttack(self, newRow, newCol, boardState):
         oldCol, oldRow = self._currentPosition
         direction = -1 if self._color == "white" else 1  # White moves up, black moves down
         
         if (abs(newCol - oldCol) == 1 and 
-            newRow == oldRow + direction and 
-            boardState[newRow][newCol] is not None and 
-            boardState[newRow][newCol].color != self._color):
-            print(f'move approved ({self})') 
-            return True
+            newRow == oldRow + direction):
             
-        # TODO: Implement en passant capture
-    
+            # standard capture
+            if (boardState[newRow][newCol] and 
+                boardState[newRow][newCol].color != self._color):
+                return True
+                
+            # en passant capture
+            adjacent_piece = boardState[oldRow][newCol]
+            if (adjacent_piece and 
+                adjacent_piece.type == 'pawn' and 
+                adjacent_piece.color != self._color and
+                getattr(adjacent_piece, '_Pawn__en_passant_vulnerable', False)):
+                return True
+            
+        return False
+
     def getNumber(self):
         return self.__number

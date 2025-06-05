@@ -163,17 +163,36 @@ while isRunning:
                     (newRow, newCol) != selectedPiece):
                     
                     boardState = board.getBoard()
+                    targetPiece = boardState[newRow][newCol]
                     piece = boardState[selectedPiece[0]][selectedPiece[1]]
                     
                     # only allow to move your own pieces
                     if (piece and piece.color == currentTurn and 
                         piece.validateMove(newRow, newCol, boardState)):
                         
-                        # --- check mate ---
-                        targetPiece = boardState[newRow][newCol]
-                        if targetPiece and targetPiece.type == 'king':
-                            gameOver = True
-                            winner = currentTurn
+                        # --- Handle castling ---
+                        if (piece.type == 'king' and 
+                            abs(newCol - selectedPiece[1]) == 2):  # Castling move
+                            
+                            # Determine rook position and new position
+                            direction = 1 if newCol > selectedPiece[1] else -1  # 1=kingside, -1=queenside
+                            rook_col = 7 if direction == 1 else 0
+                            rook_new_col = newCol - direction  # Rook moves adjacent to king
+                            
+                            # Get and move the rook
+                            rook = boardState[selectedPiece[0]][rook_col]
+                         
+                            if rook and rook.type == 'rook':
+                                # Update rook position
+                                rook._currentPosition = (selectedPiece[0], rook_new_col)
+                                rook._firstMove = False
+                                # Update board state
+                                boardState[selectedPiece[0]][rook_col] = None
+                                boardState[selectedPiece[0]][rook_new_col] = rook
+                
+                        # --- eventually kill the target ---
+                        if targetPiece != None:
+                            targetPiece._alive = False
                         
                         # --- move the piece ---
                         piece._currentPosition = (newCol, newRow)
@@ -181,9 +200,16 @@ while isRunning:
                             piece._firstMove = False
                         boardState[selectedPiece[0]][selectedPiece[1]] = None
                         boardState[newRow][newCol] = piece
+
+                        # --- check mate ---
+                        if targetPiece and targetPiece.type == 'king':
+                            gameOver = True
+                            winner = currentTurn
                         
                         # --- change turn ---
                         currentTurn = 'black' if currentTurn == 'white' else 'white'
+                
+                        board.print_board_debug()
                             
             # --- reset dragging flags ---
             isDragging = False

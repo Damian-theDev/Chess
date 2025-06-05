@@ -27,6 +27,10 @@ class Piece:
     def firstMove(self):
         return self._firstMove
     
+    @firstMove.setter
+    def firstMove(self, new_state):
+        self._firstMove = new_state
+    
     @property
     def type(self):
         return self._type

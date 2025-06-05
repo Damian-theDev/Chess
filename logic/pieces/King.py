@@ -18,22 +18,65 @@ class King(Piece):
         oldCol, oldRow = self._currentPosition
         colDiff = abs(newCol - oldCol)
         rowDiff = abs(newRow - oldRow)
+        targetPiece = boardState[newRow][newCol]
 
         # --- normal king movement rules ---
         if colDiff > 1 or rowDiff > 1:
-            print(f'movement not permitted ({self})')
-            return False
-        
-        targetPiece = boardState[newRow][newCol]
-            
+            if not self.__validateCastling(newRow, newCol, boardState):
+                return False
+                    
+        # --- friendly fire not permitted ---
         if targetPiece is not None and targetPiece.color == self._color:
-            print(f'friendly fire is not permitted ({self})')
             return False
         
+        # --- don't put yourself in check ---
         if self.__squareIsSafe(newCol, newRow, boardState):
-            print(f'move approved ({self})')  
             return True
-            
+
+        return False
+
+    def __validateCastling(self, newRow, newCol, boardState):
+        oldCol, oldRow = self._currentPosition
+        
+        # --- king has already moved ---
+        if not self._firstMove:
+            return False
+        
+        # --- must be moving horizontally ---
+        if newRow != oldRow:
+            return False
+        
+        # --- must be moving exactly 2 squares ---
+        if abs(newCol - oldCol) != 2:
+            return False
+        
+        # --- determine rook position and direction ---
+        direction = 2 if newCol > oldCol else -2  # kingside (2) or queenside (-2)
+        rookCol = 7 if direction == 2 else 0
+        rook = boardState[oldRow][rookCol]
+        
+        # --- rook conditions ---
+        if not (rook and rook.type == 'rook' and rook._firstMove):
+            print(1)
+            return False
+        
+        # --- check if squares between are empty ---
+        start = min(oldCol, newCol) + 1
+        end = max(oldCol, newCol)
+        for col in range(start, end):
+            if boardState[oldRow][col] is not None:
+                print(2)
+                return False
+        
+        # --- check if king moves through check ---
+        for col in [oldCol, oldCol + direction, newCol]:
+            if not self.__squareIsSafe(col, oldRow, boardState):
+                print(3)
+                return False
+        
+        # --- castle approved ---
+        return True
+
 
     #     # --- castling ---
     #     if self.firstMove and rowDiff == 0 and colDiff == 2:
@@ -81,7 +124,5 @@ class King(Piece):
                     return False
                 elif piece.validateMove(newKingRow, newKingCol, boardState):
                     return False
-            
-
 
         return True

@@ -30,15 +30,12 @@ class Knight(Piece):
     
         # --- Knight moves in L-shape (2-1 pattern) ---
         if not ((deltaCol == 2 and deltaDiff == 1) or (deltaCol == 1 and deltaDiff == 2)):
-            print(f'movement not permitted ({self})')
             return False
             
         # --- Check destination square ---
         targetPiece = boardState[newRow][newCol]
         if targetPiece is not None and targetPiece.color == self._color:
-            print(f'friendly fire is not permitted ({self})')
             return False  # Can't capture own piece
         
         # --- If all checks passed ---
-        print(f'move approved ({self})')        
         return True

@@ -33,7 +33,6 @@ class Rook(Piece):
         isStraight = (deltaCol == 0 or deltaRow == 0)
         
         if not isStraight:
-            print(f'movement not permitted ({self})')
             return False
             
         # --- determine direction of movement ---
@@ -44,7 +43,6 @@ class Rook(Piece):
         currentCol, currentRow = oldCol + stepCol, oldRow + stepRow
         while currentCol != newCol or currentRow != newRow:
             if boardState[currentRow][currentCol] is not None:
-                print(f'pieces breaking the flow ({self})')
                 return False  # Piece blocking the path
             currentCol += stepCol
             currentRow += stepRow
@@ -52,9 +50,19 @@ class Rook(Piece):
         # --- check destination square ---
         targetPiece = boardState[newRow][newCol]
         if targetPiece is not None and targetPiece.color == self._color:
-            print(f'friendly fire not permitted ({self})')
             return False  
             
         # --- if all checks passed ---
-        print(f'move approved ({self})') 
         return True
+
+    # --- move the rook after castling ---    
+    def castleMove(self):
+        row, col = self.currentPosition
+        if col == 0:        # queenside
+            newCol = col + 3
+        elif col == 7:      # kingside
+            newCol = col - 2
+        else:
+            return
+        self.currentPosition = (row, newCol)
+        self.firstMove = False
